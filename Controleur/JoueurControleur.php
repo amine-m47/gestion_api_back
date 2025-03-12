@@ -1,153 +1,164 @@
 <?php
-namespace App\Controleurs;
+namespace Controleurs;
+require_once '../Modele/Joueur.php'; // Add this line to include the Joueur class
 
-use App\Modeles\Joueur;
+use Modeles\Joueur;
 
 class JoueurControleur {
-
     private $joueurModel;
 
     public function __construct() {
         $this->joueurModel = new Joueur();
     }
 
-    // Afficher la liste des joueurs
+    public function get_joueur($numero_licence) {
+        try {
+            $joueur = $this->joueurModel->getJoueurByNumeroLicence($numero_licence);
+            $this->reponseJSON(200, $joueur);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération du joueur", "error" => $e->getMessage()]);
+        }
+    }
+    // Liste des joueurs
     public function liste_joueurs() {
         try {
-            // Récupérer les joueurs depuis le modèle
-            return $this->joueurModel->getAllJoueurs();
+            $joueurs = $this->joueurModel->getAllJoueurs();
+            $this->reponseJSON(200, $joueurs);
         } catch (\Exception $e) {
-            // Gérer les erreurs
-            error_log("Erreur lors de la récupération des joueurs : " . $e->getMessage());
-            return [];
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des joueurs", "error" => $e->getMessage()]);
         }
     }
 
-    // Afficher la liste des joueurs actifs
+    // Liste des joueurs actifs
     public function liste_joueurs_actifs() {
         try {
-            // Récupérer les joueurs actifs depuis le modèle
-            return $this->joueurModel->getJoueursActifs();
+            $joueurs = $this->joueurModel->getJoueursActifs();
+            $this->reponseJSON(200, $joueurs);
         } catch (\Exception $e) {
-            // Gérer les erreurs
-            error_log("Erreur lors de la récupération des joueurs actifs : " . $e->getMessage());
-            return [];
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des joueurs actifs", "error" => $e->getMessage()]);
         }
     }
 
-    // Afficher le formulaire d'ajout et gérer la soumission
+    // Ajouter un joueur
     public function ajouter_joueur() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
+            return;
+        }
 
-            $numero_licence = trim($_POST['numero_licence']);
-            $nom = trim($_POST['nom']);
-            $prenom = trim($_POST['prenom']);
-            $date_naissance = $_POST['date_naissance'];
-            $taille = isset($_POST['taille']) ? (float)$_POST['taille'] : null;
-            $poids = isset($_POST['poids']) ? (float)$_POST['poids'] : null;
-            $statut = $_POST['statut'] ?? 'Actif';
-            $position_preferee = isset($_POST['position_preferee']) ? trim($_POST['position_preferee']) : null;
-            $commentaire = isset($_POST['commentaire']) ? trim($_POST['commentaire']) : null;
+        $input = json_decode(file_get_contents("php://input"), true);
 
-            // Validation des champs
-            if (empty($nom) || empty($prenom) || empty($date_naissance)) {
-                echo "Tous les champs obligatoires doivent être remplis !";
-                return;
-            }
+        if (!$input) {
+            $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+            return;
+        }
 
-            if ($taille < 1.00 || $taille > 2.50) {
-                echo"La taille doit être comprise entre 1.00 mètre et 2.50 mètres.";
-                return;
-             }
+        $numero_licence = trim($input['numero_licence'] ?? '');
+        $nom = trim($input['nom'] ?? '');
+        $prenom = trim($input['prenom'] ?? '');
+        $date_naissance = $input['date_naissance'] ?? '';
+        $taille = isset($input['taille']) ? (float)$input['taille'] : null;
+        $poids = isset($input['poids']) ? (float)$input['poids'] : null;
+        $statut = $input['statut'] ?? 'Actif';
+        $position_preferee = trim($input['position_preferee'] ?? '');
+        $commentaire = trim($input['commentaire'] ?? '');
 
-            if ($poids !== null && ($poids < 15 || $poids > 300)) {
-                echo "Le poids doit être compris entre 15 kg et 300 kg.";
-                return;
-            }
+        // Validation
+        if (empty($nom) || empty($prenom) || empty($date_naissance)) {
+            $this->reponseJSON(400, ["message" => "Tous les champs obligatoires doivent être remplis"]);
+            return;
+        }
 
-            // Ajouter le joueur via le modèle
-            try {
-                $this->joueurModel->ajouterJoueur($numero_licence, $nom, $prenom, $date_naissance, $taille, $poids, $statut, $position_preferee, $commentaire);
+        if ($taille !== null && ($taille < 1.00 || $taille > 2.50)) {
+            $this->reponseJSON(400, ["message" => "La taille doit être comprise entre 1.00 m et 2.50 m"]);
+            return;
+        }
 
-                exit;
-            } catch (\Exception $e) {
-                echo "Erreur lors de l'ajout du joueur : " . $e->getMessage();
-            }
+        if ($poids !== null && ($poids < 15 || $poids > 300)) {
+            $this->reponseJSON(400, ["message" => "Le poids doit être compris entre 15 kg et 300 kg"]);
+            return;
+        }
+
+        // Ajouter le joueur
+        try {
+            $this->joueurModel->ajouterJoueur($numero_licence, $nom, $prenom, $date_naissance, $taille, $poids, $statut, $position_preferee, $commentaire);
+            $this->reponseJSON(201, ["message" => "Joueur ajouté avec succès"]);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de l'ajout du joueur", "error" => $e->getMessage()]);
         }
     }
 
     // Modifier un joueur
     public function modifier_joueur($numero_licence) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Récupérer les données du formulaire
-            $nom = trim($_POST['nom']);
-            $prenom = trim($_POST['prenom']);
-            $date_naissance = $_POST['date_naissance'];
-            $taille = isset($_POST['taille']) ? (float)$_POST['taille'] : null;
-            $poids = isset($_POST['poids']) ? (float)$_POST['poids'] : null;
-            $statut = $_POST['statut'] ?? 'Actif';
-            $position_preferee = isset($_POST['position_preferee']) ? trim($_POST['position_preferee']) : null;
-            $commentaire = isset($_POST['commentaire']) ? trim($_POST['commentaire']) : null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
+            return;
+        }
 
-            // Validation des champs
-            if (empty($nom) || empty($prenom) || empty($date_naissance)) {
-                echo "Tous les champs obligatoires doivent être remplis !";
-                return;
-            }
+        $input = json_decode(file_get_contents("php://input"), true);
 
-            if ($taille < 1.00 || $taille > 2.50) {
-                echo"La taille doit être comprise entre 1.00 mètre et 2.50 mètres.";
-                return;
-            }
+        if (!$input) {
+            $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+            return;
+        }
 
-            // Modifier le joueur via le modèle
-            try {
-                $this->joueurModel->modifierJoueur($numero_licence, $nom, $prenom, $date_naissance, $taille, $poids, $statut, $position_preferee, $commentaire);
+        $nom = trim($input['nom'] ?? '');
+        $prenom = trim($input['prenom'] ?? '');
+        $date_naissance = $input['date_naissance'] ?? '';
+        $taille = isset($input['taille']) ? (float)$input['taille'] : null;
+        $poids = isset($input['poids']) ? (float)$input['poids'] : null;
+        $statut = $input['statut'] ?? 'Actif';
+        $position_preferee = trim($input['position_preferee'] ?? '');
+        $commentaire = trim($input['commentaire'] ?? '');
 
-                exit;
-            } catch (\Exception $e) {
-                echo "Erreur lors de la modification du joueur : " . $e->getMessage();
-            }
-        } else {
-            // Récupérer les informations du joueur pour pré-remplir le formulaire
-            try {
-                return $this->joueurModel->getJoueurByNumeroLicence($numero_licence);
-            } catch (\Exception $e) {
-                echo "Erreur lors de la récupération des informations du joueur : " . $e->getMessage();
-                return null;
-            }
+        if (empty($nom) || empty($prenom) || empty($date_naissance)) {
+            $this->reponseJSON(400, ["message" => "Tous les champs obligatoires doivent être remplis"]);
+            return;
+        }
+
+        try {
+            $this->joueurModel->modifierJoueur($numero_licence, $nom, $prenom, $date_naissance, $taille, $poids, $statut, $position_preferee, $commentaire);
+            $this->reponseJSON(200, ["message" => "Joueur modifié avec succès"]);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de la modification du joueur", "error" => $e->getMessage()]);
         }
     }
 
     // Supprimer un joueur
     public function supprimer_joueur($numero_licence) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+            $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
+            return;
+        }
+
         try {
             if ($this->joueurModel->estJoueurSelectionne($numero_licence)) {
-                echo "<p style='color: red'>Le joueur ne peut pas être supprimé car il est dans une selection en cours.</p>";
-            } else {
-                $this->joueurModel->supprimerJoueur($numero_licence);
-
-                exit;
+                $this->reponseJSON(400, ["message" => "Le joueur est dans une sélection en cours et ne peut pas être supprimé"]);
+                return;
             }
+
+            $this->joueurModel->supprimerJoueur($numero_licence);
+            $this->reponseJSON(200, ["message" => "Joueur supprimé avec succès"]);
         } catch (\Exception $e) {
-            echo "Erreur lors de la suppression du joueur : " . $e->getMessage();
+            $this->reponseJSON(500, ["message" => "Erreur lors de la suppression du joueur", "error" => $e->getMessage()]);
         }
     }
 
+    // Obtenir les statistiques d'un joueur
     public function getStatistiquesJoueur($numero_licence) {
         try {
-            return $this->joueurModel->getStatistiquesJoueur($numero_licence);
+            $stats = $this->joueurModel->getStatistiquesJoueur($numero_licence);
+            $this->reponseJSON(200, $stats);
         } catch (\Exception $e) {
-            error_log("Erreur lors de la récupération des statistiques du joueur : " . $e->getMessage());
-            return [
-                'titularisations' => 0,
-                'remplacements' => 0,
-                'moyenne_notes' => 0,
-                'pourcentage_victoires' => 0,
-            ];
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des statistiques", "error" => $e->getMessage()]);
         }
     }
-    public function estJoueurSelectionnePourMatchAVenir($numero_licence) {
-        return $this->joueurModel->estJoueurSelectionne($numero_licence, true);
+
+    // Fonction utilitaire pour répondre en JSON
+    private function reponseJSON($code, $data) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 }

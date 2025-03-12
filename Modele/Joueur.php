@@ -1,8 +1,9 @@
 <?php
-namespace App\Modeles;
+namespace Modeles;
+require_once '../Config/database.php'; // Add this line to include the Joueur class
 
 use PDO;
-use App\Config\Database;
+use Config\Database;
 use Exception;
 
 class Joueur {
