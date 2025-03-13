@@ -6,7 +6,8 @@ use Controleurs\JoueurControleur;
 $joueurControleur = new JoueurControleur();
 
 $http_method = $_SERVER['REQUEST_METHOD'];
-
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = explode('/', trim($uri, '/'));
 
 switch ($http_method) {
     case "GET":
