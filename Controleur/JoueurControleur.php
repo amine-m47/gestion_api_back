@@ -101,18 +101,19 @@ class JoueurControleur {
             $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
             return;
         }
+        $existingJoueur = $this->joueurModel->getJoueurByNumeroLicence($numero_licence);
 
-        $nom = trim($input['nom'] ?? '');
-        $prenom = trim($input['prenom'] ?? '');
-        $date_naissance = $input['date_naissance'] ?? '';
-        $taille = isset($input['taille']) ? (float)$input['taille'] : null;
-        $poids = isset($input['poids']) ? (float)$input['poids'] : null;
+        $nom = trim($input['nom'] ?? $existingJoueur['nom']);
+        $prenom = trim($input['prenom'] ?? $existingJoueur['prenom']);
+        $date_naissance = $input['date_naissance'] ?? $existingJoueur['date_naissance'];
+        $taille = isset($input['taille']) ? (float)$input['taille'] : $existingJoueur['taille'];
+        $poids = isset($input['poids']) ? (float)$input['poids'] : $existingJoueur['poids'];
         $statut = $input['statut'] ?? 'Actif';
-        $position_preferee = trim($input['position_preferee'] ?? '');
-        $commentaire = trim($input['commentaire'] ?? '');
+        $position_preferee = trim($input['position_preferee'] ?? $existingJoueur['position_preferee']);
+        $commentaire = trim($input['commentaire'] ?? $existingJoueur['commentaire']);
 
         if (empty($nom) || empty($prenom) || empty($date_naissance)) {
-            $this->reponseJSON(400, ["message" => "Tous les champs obligatoires doivent être remplis"]);
+            $this->reponseJSON(400, ["message" => "Tous les champs obligatoires: nom, prenom doivent être remplis"]);
             return;
         }
 

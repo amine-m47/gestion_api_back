@@ -10,8 +10,8 @@ $http_method = $_SERVER['REQUEST_METHOD'];
 
 switch ($http_method) {
     case "GET":
-        if (isset($_GET['numero_licence'])) {
-            $numero_licence = htmlspecialchars($_GET['numero_licence']);
+        if (isset($_GET['id'])) {
+            $numero_licence = htmlspecialchars($_GET['id']);
             $matchingData = $joueurControleur->get_joueur($numero_licence);
             deliver_response(200, "Success", $matchingData);
         } else {
@@ -26,16 +26,16 @@ switch ($http_method) {
         deliver_response(201, "Created", $matchingData);
         break;
     case "PUT":
-        if (isset($_GET['numero_licence'])) {
-            $numero_licence = htmlspecialchars($_GET['numero_licence']);
+        if (isset($_GET['id'])) {
+            $numero_licence = htmlspecialchars($_GET['id']);
             $joueurControleur->modifier_joueur($numero_licence);
         } else {
             deliver_response(400, "Bad Request");
         }
         break;
     case "DELETE":
-        if (isset($_GET['numero_licence'])) {
-            $numero_licence = htmlspecialchars($_GET['numero_licence']);
+        if (isset($_GET['id'])) {
+            $numero_licence = htmlspecialchars($_GET['id']);
             $joueurControleur->supprimer_joueur($numero_licence);
         } else {
             deliver_response(400, "Bad Request");
