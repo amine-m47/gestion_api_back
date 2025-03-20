@@ -1,7 +1,7 @@
 <?php
-namespace App\Controleurs;
-
-use App\Modeles\Utilisateur;
+namespace Controleur;
+require '../Modele/Utilisateur.php';
+use Modele\Utilisateur;
 
 class UtilisateurControleur {
     private $utilisateurModel;
@@ -11,16 +11,16 @@ class UtilisateurControleur {
         }
         $this->utilisateurModel = new Utilisateur(); // Créer une instance du modèle Utilisateur
     }
-    public function get_utilisateur($email) {
+    public function get_utilisateur($id) {
         try {
-            $utilisateur = $this->utilisateurModel->trouverParEmail($email);
+            $utilisateur = $this->utilisateurModel->getUtilisateur($id);
             $this->reponseJSON(200, $utilisateur);
         } catch (\Exception $e) {
             $this->reponseJSON(500, ["message" => "Erreur lors de la récupération de l'utilisateur", "error" => $e->getMessage()]);
         }
     }
 
-    public function modifier_utilisateur($email) {
+    public function modifier_utilisateur($id) {
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
             return;
@@ -33,7 +33,7 @@ class UtilisateurControleur {
             return;
         }
 
-        $existingUtilisateur = $this->utilisateurModel->trouverParEmail($email);
+        $existingUtilisateur = $this->utilisateurModel->getUtilisateur($id);
 
         $nom = trim($input['nom'] ?? $existingUtilisateur['nom']);
         $prenom = trim($input['prenom'] ?? $existingUtilisateur['prenom']);
@@ -45,11 +45,18 @@ class UtilisateurControleur {
         }
 
         try {
-            $this->utilisateurModel->mettreAJourInfos($existingUtilisateur['id_utilisateur'], $nom, $prenom, $nom_equipe);
+            $this->utilisateurModel->modifierUtilisateur($existingUtilisateur['id_utilisateur'], $nom, $prenom, $nom_equipe);
             $this->reponseJSON(200, ["message" => "Utilisateur modifié avec succès"]);
         } catch (\Exception $e) {
             $this->reponseJSON(500, ["message" => "Erreur lors de la modification de l'utilisateur", "error" => $e->getMessage()]);
         }
     }
 
+    // Fonction utilitaire pour répondre en JSON
+    private function reponseJSON($code, $data) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
 }

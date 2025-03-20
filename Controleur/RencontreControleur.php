@@ -1,7 +1,8 @@
 <?php
-namespace App\Controleurs;
+namespace Controleur;
+require_once '../Modele/Rencontre.php';
 
-use App\Modeles\Rencontre;
+use Modele\Rencontre;
 
 class RencontreControleur {
 
@@ -12,24 +13,26 @@ class RencontreControleur {
     }
 
     // Récupérer les détails d'une rencontre par ID
-    public function getRencontreById($id_rencontre) {
+    public function get_rencontre($id_rencontre) {
         try {
-            return $this->rencontreModel->getRencontreById($id_rencontre);
+            $rencontre = $this->rencontreModel->getRencontre($id_rencontre);
+            $this->reponseJSON(200, $rencontre);
+
         } catch (\Exception $e) {
-            error_log("Erreur lors de la récupération de la rencontre : " . $e->getMessage());
-            return null;
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération de la rencontre", "error" => $e->getMessage()]);
         }
     }
 
 
     // Afficher la liste des rencontres
-    public function liste_rencontres() {
+    public function get_rencontres() {
         try {
             // Récupérer les rencontres depuis le modèle
-            return $this->rencontreModel->getAllRencontres();
+            $rencontres = $this->rencontreModel->getRencontres();
+            $this->reponseJSON(200, $rencontres);
         } catch (\Exception $e) {
             // Gérer les erreurs
-            error_log("Erreur lors de la récupération des rencontres : " . $e->getMessage());
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des rencontres", "error" => $e->getMessage()]);
             return [];
         }
     }
@@ -37,58 +40,78 @@ class RencontreControleur {
     // Afficher le formulaire d'ajout et gérer la soumission
     public function ajouter_rencontre() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            if (!$input) {
+                $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+                return;
+            }
+
             // Récupérer les données du formulaire
-            $equipe_adverse = trim($_POST['equipe_adverse']);
-            $date_rencontre = $_POST['date_rencontre'];
-            $heure_rencontre = $_POST['heure_rencontre'];
-            $lieu = $_POST['lieu'];
+            $equipe_adverse = trim($input['equipe_adverse']);
+            $date_rencontre = $input['date_rencontre'];
+            $heure_rencontre = $input['heure_rencontre'];
+            $lieu = trim($input['lieu']);
+
 
             // Validation des champs
             if (empty($equipe_adverse) || empty($date_rencontre) || empty($heure_rencontre) || empty($lieu)) {
-                echo "Tous les champs obligatoires doivent être remplis !";
+                $this->reponseJSON(400, ["message" => "Tous les champs obligatoires doivent être remplis"]);
                 return;
             }
 
             // Ajouter la rencontre via le modèle
             try {
                 $this->rencontreModel->ajouterRencontre($equipe_adverse, $date_rencontre, $heure_rencontre, $lieu);
-                // Redirection vers la liste des rencontres après succès
+                $this->reponseJSON(201, ["message" => "Rencontre ajoutée avec succès"]);
                 exit();
             } catch (\Exception $e) {
-                echo "Erreur lors de l'ajout de la rencontre : " . $e->getMessage();
+                $this->reponseJSON(500, ["message" => "Erreur lors de l'ajout de la rencontre", "error" => $e->getMessage()]);
             }
+        }
+        else {
+            $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
+            return;
         }
     }
 
     // Modifier une rencontre
     public function modifier_rencontre($id_rencontre) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            if (!$input) {
+                $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+                return;
+            }
+
             // Récupérer les données du formulaire
-            $equipe_adverse = trim($_POST['equipe_adverse']);
-            $date_rencontre = $_POST['date_rencontre'];
-            $heure_rencontre = $_POST['heure_rencontre'];
-            $lieu = $_POST['lieu'];
+            $equipe_adverse = trim($input['equipe_adverse']);
+            $date_rencontre = $input['date_rencontre'];
+            $heure_rencontre = $input['heure_rencontre'];
+            $lieu = trim($input['lieu']);
 
             // Validation des champs
             if (empty($equipe_adverse) || empty($date_rencontre) || empty($heure_rencontre) || empty($lieu)) {
-                echo "Tous les champs obligatoires doivent être remplis !";
+                $this->reponseJSON(400, ["message" => "Tous les champs obligatoires doivent être remplis"]);
                 return;
             }
 
             // Modifier la rencontre via le modèle
             try {
                 $this->rencontreModel->modifierRencontre($id_rencontre, $equipe_adverse, $date_rencontre, $heure_rencontre, $lieu);
-
+                $this->reponseJSON(201, ["message" => "Rencontre modifiée avec succès"]);
                 exit;
             } catch (\Exception $e) {
-                echo "Erreur lors de la modification de la rencontre : " . $e->getMessage();
+                $this->reponseJSON(500, ["message" => "Erreur lors de la modification de la rencontre", "error" => $e->getMessage()]);
             }
         } else {
             // Récupérer les informations de la rencontre pour pré-remplir le formulaire
             try {
-                return $this->rencontreModel->getRencontreById($id_rencontre);
+                return $this->rencontreModel->getRencontre($id_rencontre);
             } catch (\Exception $e) {
-                echo "Erreur lors de la récupération des informations de la rencontre : " . $e->getMessage();
+                $this->reponseJSON(500, ["message" => "Erreur lors de la recuperation de la rencontre", "error" => $e->getMessage()]);
                 return null;
             }
         }
@@ -98,18 +121,24 @@ class RencontreControleur {
     public function supprimer_rencontre($id_rencontre) {
         try {
             $this->rencontreModel->supprimerRencontre($id_rencontre);
-
+            $this->reponseJSON(201, ["message" => "Rencontre supprimée avec succès"]);
             exit;
         } catch (\Exception $e) {
-            echo "Erreur lors de la suppression de la rencontre : " . $e->getMessage();
+            $this->reponseJSON(500, ["message" => "Erreur lors de la suppression de la rencontre", "error" => $e->getMessage()]);
         }
     }
 
-    public function ajouter_resultat() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id_rencontre = $_POST['id_rencontre'];
-            $score_equipe = (int)$_POST['score_equipe'];
-            $score_adverse = (int)$_POST['score_adverse'];
+    public function ajouter_resultat($id_rencontre) {
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            $input = json_decode(file_get_contents("php://input"), true);
+
+            if (!$input) {
+                $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+                return;
+            }
+
+            $score_equipe = (int)$input['score_equipe'];
+            $score_adverse = (int)$input['score_adverse'];
 
             $resultat = 'Nul';
             if ($score_equipe > $score_adverse) {
@@ -119,31 +148,41 @@ class RencontreControleur {
             }
 
             try {
-                $this->rencontreModel->mettreAJourResultat($id_rencontre, $score_equipe, $score_adverse, $resultat);
+                $this->rencontreModel->ajouterResultat($id_rencontre, $score_equipe, $score_adverse, $resultat);
+                $this->reponseJSON(201, ["message" => "Resultat modifié avec succès"]);
                 exit;
             } catch (\Exception $e) {
-                echo "Erreur lors de l'ajout du résultat : " . $e->getMessage();
+                $this->reponseJSON(500, ["message" => "Erreur lors de la modification du resultat de la rencontre", "error" => $e->getMessage()]);
             }
         } else {
-            $id_rencontre = $_GET['id_rencontre'] ?? null;
             if ($id_rencontre) {
                 try {
-                    return $this->rencontreModel->getRencontreById($id_rencontre);
+                    $rencontre = $this->rencontreModel->getRencontre($id_rencontre);
+                    $this->reponseJSON(200, $rencontre);
                 } catch (\Exception $e) {
-                    echo "Erreur lors de la récupération de la rencontre : " . $e->getMessage();
-                    return null;
+                    $this->reponseJSON(500, ["message" => "Erreur lors de la récupération de la rencontre", "error" => $e->getMessage()]);
                 }
+            } else {
+                $this->reponseJSON(400, ["message" => "ID de rencontre manquant"]);
             }
         }
     }
 
     public function statistiquesRencontres() {
         try {
-            return $this->rencontreModel->getStatistiquesRencontres();
+            $statistiques = $this->rencontreModel->getStatistiquesRencontres();
+            $this->reponseJSON(200, $statistiques);
+
         } catch (\Exception $e) {
-            error_log("Erreur lors de la récupération des statistiques des rencontres : " . $e->getMessage());
-            return [];
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération de la rencontre", "error" => $e->getMessage()]);
         }
+    }
+
+    private function reponseJSON($code, $data) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 
 }

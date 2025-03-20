@@ -1,8 +1,9 @@
 <?php
-namespace App\Modeles;
-
+namespace Modele;
+require_once '../Config/database.php';
 use PDO;
-use App\Config\Database;
+use Config\Database;
+use Exception; // Add this line
 
 class Selection {
     private $db;
@@ -13,7 +14,7 @@ class Selection {
 
     public function getJoueursSelectionnes($id_rencontre) {
         $stmt = $this->db->prepare("
-            SELECT j.*, s.poste, s.note
+            SELECT j.nom, j.prenom, j.position_preferee, s.poste, s.note
             FROM joueur j
             JOIN selection s ON j.numero_licence = s.numero_licence
             WHERE s.id_rencontre = :id_rencontre
@@ -23,7 +24,7 @@ class Selection {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function updatePoste($id_rencontre, $numero_licence, $poste) {
+    public function modifierPoste($id_rencontre, $numero_licence, $poste) {
         try {
             // Vérification si la sélection existe
             $stmt = $this->db->prepare("
@@ -67,15 +68,20 @@ class Selection {
         }
     }
 
-    public function updateNote($id_rencontre, $id_joueur, $note) {
+    public function modifierNote($id_rencontre, $id_joueur, $note) {
         try {
-            // Remplacer la note vide par NULL
+            // Ensure the note is within the allowed range (e.g., 0 to 10)
+            if ($note < 0 || $note > 5) {
+                throw new Exception("La note doit être comprise entre 0 et 5.");
+            }
+
+            // Replace empty note with NULL
             $note = empty($note) ? null : (int)$note;
             $stmt = $this->db->prepare("
-                UPDATE selection
-                SET note = :note
-                WHERE id_rencontre = :id_rencontre AND numero_licence = :id_joueur
-            ");
+            UPDATE selection
+            SET note = :note
+            WHERE id_rencontre = :id_rencontre AND numero_licence = :id_joueur
+        ");
             $stmt->bindParam(':note', $note, PDO::PARAM_INT);
             $stmt->bindParam(':id_rencontre', $id_rencontre, PDO::PARAM_INT);
             $stmt->bindParam(':id_joueur', $id_joueur, PDO::PARAM_STR);
@@ -85,7 +91,7 @@ class Selection {
         }
     }
 
-    public function getNotesByRencontre($id_rencontre) {
+    public function getNotes($id_rencontre) {
         try {
             $stmt = $this->db->prepare("
                 SELECT numero_licence, note
@@ -107,9 +113,9 @@ class Selection {
         }
     }
 
-    public function getNbJoueursNotes($id_rencontre) {
+    public function getNbNotes($id_rencontre) {
         try {
-            $notes = $this->getNotesByRencontre($id_rencontre);
+            $notes = $this->getNotes($id_rencontre);
 
             // Compter les notes non nulles
             $notesNonNulles = array_filter($notes, fn($note) => $note !== null);
@@ -132,3 +138,4 @@ class Selection {
         }
     }
 }
+?>

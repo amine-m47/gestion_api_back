@@ -12,8 +12,8 @@ $uri = explode('/', trim($uri, '/'));
 switch ($http_method) {
     case "GET":
         if (isset($_GET['id'])) {
-            $email = htmlspecialchars($_GET['id']);
-            $matchingData = $utilisateurControleur->get_utilisateur($email);
+            $id = htmlspecialchars($_GET['id']);
+            $matchingData = $utilisateurControleur->get_utilisateur($id);
             deliver_response(200, "Success", $matchingData);
         } else {
             deliver_response(400, "Bad Request");
@@ -21,8 +21,8 @@ switch ($http_method) {
         break;
     case "PUT":
         if (isset($_GET['id'])) {
-            $email = htmlspecialchars($_GET['id']);
-            $utilisateurControleur->modifier_utilisateur($email);
+            $id = htmlspecialchars($_GET['id']);
+            $utilisateurControleur->modifier_utilisateur($id);
         } else {
             deliver_response(400, "Bad Request");
         }
