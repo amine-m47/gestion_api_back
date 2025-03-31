@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# Réécriture pour SelectionEndpoint
+RewriteRule ^selection/([0-9]+)$ /Endpoint/SelectionEndpoint.php?id=$1 [L]
+
+# Réécriture pour JoueurEndpoint
+RewriteRule ^joueur$ /Endpoint/JoueurEndpoint.php [L]
+
+# Réécriture pour RencontreEndpoint
+RewriteRule ^rencontre$ /Endpoint/RencontreEndpoint.php [L]
+
+# Réécriture pour StatistiqueEndpoint
+RewriteRule ^statistique$ /Endpoint/StatistiqueEndpoint.php [L]
+
+# Réécriture pour UtilisateurEndpoint
+RewriteRule ^utilisateur/([0-9]+)$ /Endpoint/UtilisateurEndpoint.php?id=$1 [L]
