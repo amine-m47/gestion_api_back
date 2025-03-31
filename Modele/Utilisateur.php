@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modeles;
+namespace App\Modele;
 
 use App\Config\Database;
 

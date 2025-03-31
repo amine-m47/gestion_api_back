@@ -1,8 +1,8 @@
 <?php
 namespace App\Controleurs;
 
-use App\Modeles\Selection;
-use App\Modeles\Joueur;
+use App\Modele\Selection;
+use App\Modele\Joueur;
 
 class SelectionControleur {
     private $selectionModel;

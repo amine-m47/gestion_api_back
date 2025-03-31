@@ -1,7 +1,7 @@
 <?php
 namespace App\Controleurs;
 
-use App\Modeles\Utilisateur;
+use App\Modele\Utilisateur;
 
 class UtilisateurControleur {
     private $utilisateurModel;

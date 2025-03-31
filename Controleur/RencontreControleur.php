@@ -1,7 +1,8 @@
 <?php
-namespace App\Controleurs;
+namespace Controleurs;
+require_once '../Modele/Rencontre.php'; // Add this line to include the Joueur class
 
-use App\Modeles\Rencontre;
+use Modeles\Rencontre;
 
 class RencontreControleur {
 
@@ -20,7 +21,6 @@ class RencontreControleur {
             return null;
         }
     }
-
 
     // Afficher la liste des rencontres
     public function liste_rencontres() {
@@ -96,14 +96,15 @@ class RencontreControleur {
 
     // Supprimer une rencontre
     public function supprimer_rencontre($id_rencontre) {
-        try {
+        if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            try {
             $this->rencontreModel->supprimerRencontre($id_rencontre);
 
             exit;
         } catch (\Exception $e) {
             echo "Erreur lors de la suppression de la rencontre : " . $e->getMessage();
         }
-    }
+    }}
 
     public function ajouter_resultat() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
