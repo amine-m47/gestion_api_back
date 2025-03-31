@@ -1,10 +1,9 @@
 <?php
-namespace Modeles;
-require_once '../Config/database.php'; // Add this line to include the Joueur class
-
+namespace Modele;
+require_once '../Config/database.php';
 use PDO;
 use Config\Database;
-use Exception;
+
 class Rencontre {
     private $db;
 
@@ -13,10 +12,22 @@ class Rencontre {
     }
 
     // Récupérer toutes les rencontres
-    public function getAllRencontres() {
+    public function getRencontres() {
         $stmt = $this->db->prepare("SELECT * FROM rencontre ORDER BY date_rencontre, heure_rencontre");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Récupérer une rencontre par son ID
+    public function getRencontre($id_rencontre) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM rencontre WHERE id_rencontre = :id_rencontre");
+            $stmt->bindParam(':id_rencontre', $id_rencontre);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC); // Retourner la rencontre sous forme de tableau associatif
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur lors de la récupération de la rencontre : " . $e->getMessage());
+        }
     }
 
 
@@ -75,23 +86,13 @@ class Rencontre {
         }
     }
 
-    public function mettreAJourResultat($id_rencontre, $score_equipe, $score_adverse, $resultat) {
+    public function ajouterResultat($id_rencontre, $score_equipe, $score_adverse, $resultat) {
         $sql = "UPDATE rencontre SET score_equipe = ?, score_adverse = ?, resultat = ? WHERE id_rencontre = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$score_equipe, $score_adverse, $resultat, $id_rencontre]);
     }
 
-    // Récupérer une rencontre par son ID
-    public function getRencontreById($id_rencontre) {
-        try {
-            $stmt = $this->db->prepare("SELECT * FROM rencontre WHERE id_rencontre = :id_rencontre");
-            $stmt->bindParam(':id_rencontre', $id_rencontre);
-            $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC); // Retourner la rencontre sous forme de tableau associatif
-        } catch (\Exception $e) {
-            throw new \Exception("Erreur lors de la récupération de la rencontre : " . $e->getMessage());
-        }
-    }
+
     public function getStatistiquesRencontres() {
         try {
             // Requête SQL pour obtenir le nombre de victoires, défaites et nuls

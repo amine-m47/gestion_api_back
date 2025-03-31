@@ -1,7 +1,6 @@
 <?php
+use Controleur\RencontreControleur;
 require_once '../Controleur/RencontreControleur.php';
-
-use Controleurs\RencontreControleur;
 
 $rencontreControleur = new RencontreControleur();
 
@@ -13,49 +12,41 @@ switch ($http_method) {
     case "GET":
         if (isset($_GET['id'])) {
             $id_rencontre = htmlspecialchars($_GET['id']);
-            $matchingData = $rencontreControleur->getRencontreById($id_rencontre);
+            $matchingData = $rencontreControleur->get_rencontre($id_rencontre);
             deliver_response(200, "Success", $matchingData);
         } else {
-            $matchingData = $rencontreControleur->liste_rencontres();
+            $matchingData = $rencontreControleur->get_rencontres();
             deliver_response(200, "Success", $matchingData);
         }
         break;
     case "POST":
         $postedData = file_get_contents('php://input');
         $data = json_decode($postedData, true);
-        if (isset($data['equipe_adverse']) && isset($data['date_rencontre']) && isset($data['heure_rencontre']) && isset($data['lieu'])) {
-            $_POST = $data;
-            $matchingData = 'r'
-                //$rencontreControleur->ajouter_rencontre()
-                ;
-            deliver_response(201, "Created", $matchingData);
-        } else {
-            deliver_response(400, "Bad Request", ["message" => "Données manquantes"]);
-        }
+        $matchingData = $rencontreControleur->ajouter_rencontre();
+        deliver_response(201, "Created", $matchingData);
         break;
     case "PUT":
+        $postedData = file_get_contents('php://input');
+        $data = json_decode($postedData, true);
         if (isset($_GET['id'])) {
             $id_rencontre = htmlspecialchars($_GET['id']);
-            $postedData = file_get_contents('php://input');
-            $data = json_decode($postedData, true);
-            if (isset($data['equipe_adverse']) && isset($data['date_rencontre']) && isset($data['heure_rencontre']) && isset($data['lieu'])) {
-                $_POST = $data;
-                $rencontreControleur->modifier_rencontre($id_rencontre);
-                deliver_response(200, "Updated", ["message" => "Rencontre modifiée avec succès"]);
+            if (isset($data['score_equipe']) && isset($data['score_adverse'])) {
+                $matchingData = $rencontreControleur->ajouter_resultat($id_rencontre);
+                deliver_response(200, "Success", $matchingData);
             } else {
-                deliver_response(400, "Bad Request", ["message" => "Données manquantes"]);
+                $matchingData = $rencontreControleur->modifier_rencontre($id_rencontre);
+                deliver_response(200, "Success", $matchingData);
             }
         } else {
-            deliver_response(400, "Bad Request", ["message" => "ID de rencontre manquant"]);
+            deliver_response(400, "Bad Request");
         }
         break;
     case "DELETE":
         if (isset($_GET['id'])) {
             $id_rencontre = htmlspecialchars($_GET['id']);
             $rencontreControleur->supprimer_rencontre($id_rencontre);
-            deliver_response(200, "Deleted", ["message" => "Rencontre supprimée avec succès"]);
         } else {
-            deliver_response(400, "Bad Request", ["message" => "ID de rencontre manquant"]);
+            deliver_response(400, "Bad Request");
         }
         break;
     case "OPTIONS":

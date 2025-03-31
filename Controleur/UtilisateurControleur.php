@@ -1,7 +1,7 @@
 <?php
-namespace App\Controleurs;
-
-use App\Modele\Utilisateur;
+namespace Controleur;
+require '../Modele/Utilisateur.php';
+use Modele\Utilisateur;
 
 class UtilisateurControleur {
     private $utilisateurModel;
@@ -11,68 +11,52 @@ class UtilisateurControleur {
         }
         $this->utilisateurModel = new Utilisateur(); // Créer une instance du modèle Utilisateur
     }
-    public function getInfosUtilisateur() {
-        // Vérifier si l'utilisateur est connecté
-        if (isset($_SESSION['email'])) {
-            $email = $_SESSION['email'];
-
-            // Récupérer les informations depuis la base de données
-            $user = $this->utilisateurModel->trouverParEmail($email);
-
-            // Retourner les informations ou une valeur par défaut
-            if ($user) {
-                return $user;
-            } else {
-                return [
-                    'prenom' => '',
-                    'nom' => '',
-                    'nom_equipe' => '',
-                ];
-            }
-        } else {
-            // Si l'utilisateur n'est pas connecté, retourner des valeurs par défaut
-            return [
-                'prenom' => '',
-                'nom' => '',
-                'nom_equipe' => '',
-            ];
+    public function get_utilisateur($id) {
+        try {
+            $utilisateur = $this->utilisateurModel->getUtilisateur($id);
+            $this->reponseJSON(200, $utilisateur);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération de l'utilisateur", "error" => $e->getMessage()]);
         }
     }
 
-    public function modifierInfos() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Vérifier que les champs sont remplis
-            $prenom = htmlspecialchars(trim($_POST['prenom']));
-            $nom = htmlspecialchars(trim($_POST['nom']));
-            $nomEquipe = htmlspecialchars(trim($_POST['nom_equipe']));
-
-            // Validation des champs
-            if (empty($prenom) || empty($nom) || empty($nomEquipe)) {
-                return "Tous les champs sont obligatoires.";
-            }
-
-            // Récupérer l'utilisateur connecté
-            if (isset($_SESSION['email'])) {
-                $email = $_SESSION['email'];
-                $user = $this->utilisateurModel->trouverParEmail($email);
-
-                if ($user) {
-                    // Mise à jour des informations
-                    $this->utilisateurModel->mettreAJourInfos(
-                        $user['id_utilisateur'],
-                        $nom,
-                        $prenom,
-                        $nomEquipe
-                    );
-                    return "Informations mises à jour avec succès !";
-                } else {
-                    return "Utilisateur introuvable.";
-                }
-            } else {
-                return "Aucun utilisateur connecté.";
-            }
+    public function modifier_utilisateur($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->reponseJSON(405, ["message" => "Méthode non autorisée"]);
+            return;
         }
-        return "";
+
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        if (!$input) {
+            $this->reponseJSON(400, ["message" => "Données JSON invalides"]);
+            return;
+        }
+
+        $existingUtilisateur = $this->utilisateurModel->getUtilisateur($id);
+
+        $nom = trim($input['nom'] ?? $existingUtilisateur['nom']);
+        $prenom = trim($input['prenom'] ?? $existingUtilisateur['prenom']);
+        $nom_equipe = trim($input['nom_equipe'] ?? $existingUtilisateur['nom_equipe']);
+
+        if (empty($nom) || empty($prenom)) {
+            $this->reponseJSON(400, ["message" => "Tous les champs obligatoires: nom, prenom doivent être remplis"]);
+            return;
+        }
+
+        try {
+            $this->utilisateurModel->modifierUtilisateur($existingUtilisateur['id_utilisateur'], $nom, $prenom, $nom_equipe);
+            $this->reponseJSON(200, ["message" => "Utilisateur modifié avec succès"]);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de la modification de l'utilisateur", "error" => $e->getMessage()]);
+        }
     }
 
+    // Fonction utilitaire pour répondre en JSON
+    private function reponseJSON($code, $data) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
 }

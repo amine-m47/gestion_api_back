@@ -1,5 +1,5 @@
 <?php
-namespace Modeles;
+namespace Modele;
 require_once '../Config/database.php'; // Add this line to include the Joueur class
 
 use PDO;

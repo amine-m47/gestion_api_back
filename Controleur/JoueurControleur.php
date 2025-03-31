@@ -1,8 +1,7 @@
 <?php
-namespace Controleurs;
-require_once '../Modele/Joueur.php'; // Add this line to include the Joueur class
-
-use Modeles\Joueur;
+namespace Controleur;
+require_once '../Modele/Joueur.php';
+use Modele\Joueur;
 
 class JoueurControleur {
     private $joueurModel;

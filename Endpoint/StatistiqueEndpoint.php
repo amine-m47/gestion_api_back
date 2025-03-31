@@ -1,10 +1,10 @@
 <?php
 
-use Controleur\SelectionControleur;
+use Controleur\StatistiqueControleur;
 
-require_once '../Controleur/SelectionControleur.php';
+require_once '../Controleur/StatistiqueControleur.php';
 
-$selectionControleur = new SelectionControleur();
+$statistiqueControleur = new StatistiqueControleur();
 
 $http_method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -12,35 +12,21 @@ $uri = explode('/', trim($uri, '/'));
 
 switch ($http_method) {
     case "GET":
+        $statsRencontres = $statistiqueControleur->get_stats_rencontres();
+        $joueurs = $statistiqueControleur->get_joueurs();
         if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
-            $joueurs_actifs = $selectionControleur->get_joueurs_actifs();
-            $joueurs_selectionnes = $selectionControleur->get_joueurs_selectionnes($id_rencontre);
+            $numero_licence = htmlspecialchars($_GET['id']);
+            $statsJoueur = $statistiqueControleur->get_stats_joueur($numero_licence);
             $response = [
-                'joueurs_actifs' => $joueurs_actifs,
-                'joueurs_selectionnes' => $joueurs_selectionnes
+                'statsJoueur' => $statsJoueur
             ];
             deliver_response(200, "Success", $response);
         } else {
-            deliver_response(400, "Bad Request");
-        }
-        break;
-    case "PUT":
-        $postedData = file_get_contents('php://input');
-        $data = json_decode($postedData, true);
-        if (isset($data['id_rencontre'])) {
-            $id_rencontre = htmlspecialchars($data['id_rencontre']);
-            $selectionControleur->modifier_selection($id_rencontre, $data);
-        } else {
-            deliver_response(400, "Bad Request");
-        }
-        break;
-    case "DELETE":
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
-            $selectionControleur->supprimer_selection($id_rencontre);
-        } else {
-            deliver_response(400, "Bad Request");
+            $response = [
+                'statsRencontres' => $statsRencontres,
+                'joueurs' => $joueurs
+            ];
+            deliver_response(200, "Success", $response);
         }
         break;
     case "OPTIONS":

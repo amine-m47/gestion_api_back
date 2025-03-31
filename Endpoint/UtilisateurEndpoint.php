@@ -1,9 +1,9 @@
 <?php
-require_once '../Controleur/JoueurControleur.php';
+require_once '../Controleur/UtilisateurControleur.php';
 
-use Controleur\JoueurControleur;
+use Controleur\UtilisateurControleur;
 
-$joueurControleur = new JoueurControleur();
+$utilisateurControleur = new UtilisateurControleur();
 
 $http_method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -12,32 +12,17 @@ $uri = explode('/', trim($uri, '/'));
 switch ($http_method) {
     case "GET":
         if (isset($_GET['id'])) {
-            $numero_licence = htmlspecialchars($_GET['id']);
-            $matchingData = $joueurControleur->get_joueur($numero_licence);
+            $id = htmlspecialchars($_GET['id']);
+            $matchingData = $utilisateurControleur->get_utilisateur($id);
             deliver_response(200, "Success", $matchingData);
-        } else {
-            $matchingData = $joueurControleur->liste_joueurs();
-            deliver_response(200, "Success", $matchingData);
-        }
-        break;
-    case "POST":
-        $postedData = file_get_contents('php://input');
-        $data = json_decode($postedData, true);
-        $matchingData = $joueurControleur->ajouter_joueur();
-        deliver_response(201, "Created", $matchingData);
-        break;
-    case "PUT":
-        if (isset($_GET['id'])) {
-            $numero_licence = htmlspecialchars($_GET['id']);
-            $joueurControleur->modifier_joueur($numero_licence);
         } else {
             deliver_response(400, "Bad Request");
         }
         break;
-    case "DELETE":
+    case "PUT":
         if (isset($_GET['id'])) {
-            $numero_licence = htmlspecialchars($_GET['id']);
-            $joueurControleur->supprimer_joueur($numero_licence);
+            $id = htmlspecialchars($_GET['id']);
+            $utilisateurControleur->modifier_utilisateur($id);
         } else {
             deliver_response(400, "Bad Request");
         }
