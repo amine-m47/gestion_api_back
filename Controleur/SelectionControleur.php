@@ -35,6 +35,37 @@ class SelectionControleur {
             $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des joueurs sélectionnés", "error" => $e->getMessage()]);
         }
     }
+    public function ajouter_selection($id_rencontre, $joueurs)
+    {
+        foreach ($joueurs as $joueur) {
+            $id_joueur = htmlspecialchars($joueur['id_joueur']);
+            $poste = htmlspecialchars($joueur['poste']);
+
+            // Requête pour insérer chaque joueur sélectionné
+            $sql = "INSERT INTO Participer (id_rencontre, id_joueur, poste) VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE poste = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$id_rencontre, $id_joueur, $poste, $poste]);
+        }
+
+        return true;
+    }
+
+    public function ajouterSelection($id_rencontre, $numero_licence, $poste) {
+        try {
+            $stmt = $this->db->prepare("
+            INSERT INTO selection (id_rencontre, numero_licence, poste) 
+            VALUES (:id_rencontre, :numero_licence, :poste)
+        ");
+            $stmt->bindParam(':id_rencontre', $id_rencontre, PDO::PARAM_INT);
+            $stmt->bindParam(':numero_licence', $numero_licence, PDO::PARAM_STR);
+            $stmt->bindParam(':poste', $poste, PDO::PARAM_STR);
+            $stmt->execute();
+        } catch (\Exception $e) {
+            throw new Exception("Erreur lors de l'ajout de la sélection : " . $e->getMessage());
+        }
+    }
+
     public function modifier_selection($id_rencontre, $data) {
         try {
             $this->valider_selection($id_rencontre, $data);
