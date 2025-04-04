@@ -10,6 +10,27 @@ $http_method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = explode('/', trim($uri, '/'));
 
+$bearer_token = get_bearer_token();
+$user_role = null; // Default to unauthenticated
+
+if ($bearer_token) {
+    $auth_url = 'https://footballmanagerauth.alwaysdata.net/auth';
+    $response = file_get_contents($auth_url, false, stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Authorization: Bearer $bearer_token\r\nContent-Type: application/json\r\n",
+        ]
+    ]));
+
+    if ($response !== false) {
+        $auth_data = json_decode($response, true);
+        if (isset($auth_data['valid']) && $auth_data['valid'] === true) {
+            $user_role = $auth_data['role'];
+            $user_id = $auth_data['user_id'] ?? null;
+        }
+    }
+}
+
 switch ($http_method) {
     case "GET":
         $statsRencontres = $statistiqueControleur->get_stats_rencontres();
@@ -37,8 +58,17 @@ switch ($http_method) {
         break;
 }
 
-function deliver_response($status_code, $status_message, $data = null)
-{
+function get_bearer_token() {
+    $headers = apache_request_headers();
+    if (isset($headers['Authorization'])) {
+        if (preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+            return $matches[1];
+        }
+    }
+    return null;
+}
+
+function deliver_response($status_code, $status_message, $data = null) {
     http_response_code($status_code);
     header("Content-Type: application/json; charset=utf-8");
     header("Access-Control-Allow-Origin: *");
@@ -56,3 +86,4 @@ function deliver_response($status_code, $status_message, $data = null)
 
     echo $json_response;
 }
+?>
