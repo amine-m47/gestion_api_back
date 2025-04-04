@@ -10,8 +10,8 @@ $uri = explode('/', trim($uri, '/'));
 
 switch ($http_method) {
     case "GET":
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
+        if (isset($_GET['id_rencontre'])) {
+            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
             $matchingData = $rencontreControleur->get_rencontre($id_rencontre);
             deliver_response(200, "Success", $matchingData);
         } else {
@@ -28,8 +28,8 @@ switch ($http_method) {
     case "PUT":
         $postedData = file_get_contents('php://input');
         $data = json_decode($postedData, true);
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
+        if (isset($_GET['id_rencontre'])) {
+            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
             if (isset($data['score_equipe']) && isset($data['score_adverse'])) {
                 $matchingData = $rencontreControleur->ajouter_resultat($id_rencontre);
                 deliver_response(200, "Success", $matchingData);
@@ -42,8 +42,8 @@ switch ($http_method) {
         }
         break;
     case "DELETE":
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
+        if (isset($_GET['id_rencontre'])) {
+            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
             $rencontreControleur->supprimer_rencontre($id_rencontre);
         } else {
             deliver_response(400, "Bad Request");

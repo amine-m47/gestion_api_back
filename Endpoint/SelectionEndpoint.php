@@ -12,8 +12,8 @@ $uri = explode('/', trim($uri, '/'));
 
 switch ($http_method) {
     case "GET":
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
+        if (isset($_GET['id_rencontre'])) {
+            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
             $joueurs_actifs = $selectionControleur->get_joueurs_actifs();
             $joueurs_selectionnes = $selectionControleur->get_joueurs_selectionnes($id_rencontre);
             $response = [
@@ -41,6 +41,25 @@ switch ($http_method) {
             $selectionControleur->supprimer_selection($id_rencontre);
         } else {
             deliver_response(400, "Bad Request");
+        }
+        break;
+    case "POST":
+        $postedData = file_get_contents('php://input');
+        $data = json_decode($postedData, true);
+
+        if (isset($data['id_rencontre'], $data['numero_licence'], $data['poste'])) {
+            $id_rencontre = htmlspecialchars($data['id_rencontre']);
+            $numero_licence = htmlspecialchars($data['numero_licence']);
+            $poste = htmlspecialchars($data['poste']);
+
+            if (!empty($poste)) {
+                $selectionControleur->ajouter_selection($id_rencontre, $numero_licence, $poste);
+                deliver_response(201, "Selection ajoutée avec succès");
+            } else {
+                deliver_response(400, "Le poste ne peut pas être vide.");
+            }
+        } else {
+            deliver_response(400, "Données incomplètes.");
         }
         break;
     case "OPTIONS":
