@@ -51,27 +51,43 @@ class SelectionControleur {
         return true;
     }
 
-    public function ajouterSelection($id_rencontre, $numero_licence, $poste) {
-        try {
-            $stmt = $this->db->prepare("
-            INSERT INTO selection (id_rencontre, numero_licence, poste) 
-            VALUES (:id_rencontre, :numero_licence, :poste)
-        ");
-            $stmt->bindParam(':id_rencontre', $id_rencontre, PDO::PARAM_INT);
-            $stmt->bindParam(':numero_licence', $numero_licence, PDO::PARAM_STR);
-            $stmt->bindParam(':poste', $poste, PDO::PARAM_STR);
-            $stmt->execute();
-        } catch (\Exception $e) {
-            throw new Exception("Erreur lors de l'ajout de la sélection : " . $e->getMessage());
-        }
-    }
-
     public function modifier_selection($id_rencontre, $data) {
         try {
             $this->valider_selection($id_rencontre, $data);
             $this->reponseJSON(200, ["message" => "Modification effectuée avec succès"]);
         } catch (\Exception $e) {
             $this->reponseJSON(500, ["message" => "Erreur lors de la modification", "error" => $e->getMessage()]);
+        }
+    }
+
+    public function get_notes($id_rencontre) {
+        try {
+            return $this->selectionModel->getNotes($id_rencontre);
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des notes", "error" => $e->getMessage()]);
+        }
+    }
+
+    public function modifierNote($id_rencontre, $id_joueur, $note) {
+        try {
+            // Ensure the note is within the allowed range (e.g., 0 to 10)
+            if ($note < 0 || $note > 5) {
+                throw new Exception("La note doit être comprise entre 0 et 5.");
+            }
+
+            // Replace empty note with NULL
+            $note = empty($note) ? null : (int)$note;
+            $stmt = $this->db->prepare("
+            UPDATE selection
+            SET note = :note
+            WHERE id_rencontre = :id_rencontre AND numero_licence = :id_joueur
+        ");
+            $stmt->bindParam(':note', $note, PDO::PARAM_INT);
+            $stmt->bindParam(':id_rencontre', $id_rencontre, PDO::PARAM_INT);
+            $stmt->bindParam(':id_joueur', $id_joueur, PDO::PARAM_STR);
+            return $stmt->execute();
+        } catch (\Exception $e) {
+            throw new Exception("Erreur lors de la mise à jour de la note : " . $e->getMessage());
         }
     }
 
