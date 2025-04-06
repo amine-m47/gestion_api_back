@@ -14,7 +14,7 @@ class Selection {
 
     public function getJoueursSelectionnes($id_rencontre) {
         $stmt = $this->db->prepare("
-            SELECT j.nom, j.prenom, j.position_preferee, s.poste, s.note
+            SELECT j.numero_licence, j.nom, j.prenom, j.position_preferee, s.poste, s.note
             FROM joueur j
             JOIN selection s ON j.numero_licence = s.numero_licence
             WHERE s.id_rencontre = :id_rencontre
@@ -137,5 +137,11 @@ class Selection {
             throw new Exception("Erreur lors de la suppression de la sélection : " . $e->getMessage());
         }
     }
+    public function ajouterOuModifier($id_rencontre, $numero_licence, $poste) {
+
+        $stmt = $this->db->prepare("INSERT INTO selection (id_rencontre, numero_licence, poste) VALUES (?, ?, ?)");
+        $stmt->execute([$id_rencontre, $numero_licence, $poste]);
+    }
+
 }
 ?>

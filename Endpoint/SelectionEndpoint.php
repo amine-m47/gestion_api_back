@@ -36,8 +36,8 @@ switch ($http_method) {
         }
         break;
     case "DELETE":
-        if (isset($_GET['id'])) {
-            $id_rencontre = htmlspecialchars($_GET['id']);
+        if (isset($_GET['id_rencontre'])) {
+            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
             $selectionControleur->supprimer_selection($id_rencontre);
         } else {
             deliver_response(400, "Bad Request");
@@ -45,21 +45,30 @@ switch ($http_method) {
         break;
     case "POST":
         $postedData = file_get_contents('php://input');
-        $data = json_decode($postedData, true);
+        $data = json_decode($postedData, true); // Décodage du JSON
 
-        if (isset($data['id_rencontre'], $data['numero_licence'], $data['poste'])) {
+        // Vérifie si id_rencontre et selections sont présents et non vides
+        if (isset($data['id_rencontre'], $data['selections']) && !empty($data['selections']) && is_array($data['selections'])) {
             $id_rencontre = htmlspecialchars($data['id_rencontre']);
-            $numero_licence = htmlspecialchars($data['numero_licence']);
-            $poste = htmlspecialchars($data['poste']);
+            $selections = $data['selections'];
+            $selectionControleur->supprimerSelect($id_rencontre);
 
-            if (!empty($poste)) {
-                $selectionControleur->ajouter_selection($id_rencontre, $numero_licence, $poste);
-                deliver_response(201, "Selection ajoutée avec succès");
-            } else {
-                deliver_response(400, "Le poste ne peut pas être vide.");
+            // Traitement des sélections
+            foreach ($selections as $selection) {
+                if (isset($selection['numero_licence'], $selection['poste'])) {
+                    // Vérifie que les valeurs nécessaires sont présentes
+                    if (!empty($selection['numero_licence']) && $selection['poste'] != "") {
+                        // Appel à la fonction pour ajouter ou mettre à jour la sélection
+                        $selectionControleur->ajouter_ou_modifier_selection($id_rencontre, $selection['numero_licence'], $selection['poste']);
+                    }
+                } else {
+                    deliver_response(400, "Les données de sélection sont incomplètes.");
+                    return;
+                }
             }
+            deliver_response(201, "Sélections ajoutées ou mises à jour avec succès");
         } else {
-            deliver_response(400, "Données incomplètes.");
+            deliver_response(400, "Données de sélection manquantes ou mal formées.");
         }
         break;
     case "OPTIONS":

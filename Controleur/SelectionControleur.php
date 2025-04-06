@@ -35,21 +35,17 @@ class SelectionControleur {
             $this->reponseJSON(500, ["message" => "Erreur lors de la récupération des joueurs sélectionnés", "error" => $e->getMessage()]);
         }
     }
-    public function ajouter_selection($id_rencontre, $joueurs)
-    {
-        foreach ($joueurs as $joueur) {
-            $id_joueur = htmlspecialchars($joueur['id_joueur']);
-            $poste = htmlspecialchars($joueur['poste']);
 
-            // Requête pour insérer chaque joueur sélectionné
-            $sql = "INSERT INTO Participer (id_rencontre, id_joueur, poste) VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE poste = ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$id_rencontre, $id_joueur, $poste, $poste]);
+    public function ajouter_ou_modifier_selection($id_rencontre, $numero_licence, $poste) {
+        try {
+            if ($poste != "") {
+                return $this->selectionModel->ajouterOuModifier($id_rencontre, $numero_licence, $poste);
+            }
+        } catch (\Exception $e) {
+            $this->reponseJSON(500, ["message" => "Erreur lors de l'ajout du joueur ${numero_licence}'", "error" => $e->getMessage()]);
         }
-
-        return true;
     }
+
 
     public function ajouterSelection($id_rencontre, $numero_licence, $poste) {
         try {
@@ -158,6 +154,15 @@ class SelectionControleur {
         } catch (\Exception $e) {
             $this->reponseJSON(500, ["message" => "Erreur lors de la vérification et de la suppression de la sélection", "error" => $e->getMessage()]);
         }
+    }
+    public function supprimerSelect($id_rencontre) {
+            $joueursSelectionnes = $this->selectionModel->getJoueursSelectionnes($id_rencontre);
+            $joueursTitulaires = array_filter($joueursSelectionnes, function($joueur) {
+                return strpos($joueur['poste'], 'R') !== 0;
+            });
+
+            $this->selectionModel->supprimerSelection($id_rencontre);
+
     }
 
     // Fonction utilitaire pour répondre en JSON
