@@ -1,4 +1,9 @@
 <?php
+header("Content-Type: application/json; charset=utf-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE");
+header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
+
 use Controleur\RencontreControleur;
 require_once '../Controleur/RencontreControleur.php';
 
@@ -59,11 +64,6 @@ switch ($http_method) {
 
 function deliver_response($status_code, $status_message, $data = null) {
     http_response_code($status_code);
-    header("Content-Type: application/json; charset=utf-8");
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE");
-    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
-
     $response['status_code'] = $status_code;
     $response['status_message'] = $status_message;
     $response['data'] = $data;

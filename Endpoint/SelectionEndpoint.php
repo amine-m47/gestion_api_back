@@ -1,8 +1,13 @@
 <?php
-
+header("Content-Type: application/json; charset=utf-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE");
+header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
 use Controleur\SelectionControleur;
 
 require_once '../Controleur/SelectionControleur.php';
+require_once '../Controleur/RencontreControleur.php';
+
 
 $selectionControleur = new SelectionControleur();
 
@@ -12,15 +17,17 @@ $uri = explode('/', trim($uri, '/'));
 
 switch ($http_method) {
     case "GET":
-        if (isset($_GET['id_rencontre'])) {
-            $id_rencontre = htmlspecialchars($_GET['id_rencontre']);
-            $joueurs_actifs = $selectionControleur->get_joueurs_actifs();
-            $joueurs_selectionnes = $selectionControleur->get_joueurs_selectionnes($id_rencontre);
-            $response = [
-                'joueurs_actifs' => $joueurs_actifs,
-                'joueurs_selectionnes' => $joueurs_selectionnes
-            ];
-            deliver_response(200, "Success", $response);
+        if (isset($_GET['id'])) {
+            $id_rencontre = htmlspecialchars($_GET['id']);
+                $joueurs_actifs = $selectionControleur->get_joueurs_actifs();
+                $joueurs_selectionnes = $selectionControleur->get_joueurs_selectionnes($id_rencontre);
+                $notes = $selectionControleur->get_notes($id_rencontre);
+                $response = [
+                    'joueurs_actifs' => $joueurs_actifs,
+                    'joueurs_selectionnes' => $joueurs_selectionnes,
+                    'notes' => $notes
+                ];
+                deliver_response(200, "Success", $response);
         } else {
             deliver_response(400, "Bad Request");
         }
@@ -82,10 +89,6 @@ switch ($http_method) {
 function deliver_response($status_code, $status_message, $data = null)
 {
     http_response_code($status_code);
-    header("Content-Type: application/json; charset=utf-8");
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE");
-    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
     $response['status_code'] = $status_code;
     $response['status_message'] = $status_message;
